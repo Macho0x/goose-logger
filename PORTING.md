@@ -21,7 +21,7 @@ The behavior source is `src/log` in the trading bot. The checks are the unit tes
 
 There is no `tracing` subscriber and no panic hook. `emit::filter_spec` still pins the HTTP crate names to `warn`.
 
-The printed line is `[YYYYMMDD HHMMSS.nnnnnnnnn] [LEVEL] [file:row] [text]` in UTC. Goose has no call-site macro, so `file` and `row` are arguments. The old `version=` and `run_id=` prefix is not inserted. A caller that wants a run id puts it in the text.
+The printed line is `[YYYY-MM-DD HH:MM:SS.nnnnnnnnn UTC] [LEVEL] [file:row] [text]`. The clock is Unix time, so the stamp is UTC. Goose has no call-site macro, so `file` and `row` are arguments. The old `version=` and `run_id=` prefix is not inserted. A caller that wants a run id puts it in the text.
 
 The six levels are one enum. A caller cannot pass a string that is not a level. `0.1` never shipped.
 

@@ -81,14 +81,19 @@ fn stamp(out: u8[>..]&, ns: i64) {
     let sod = sec % 86400;
     let y, mo, d = civil(days);
     push_width(out, y, 4);
+    out.push('-');
     push_width(out, mo, 2);
+    out.push('-');
     push_width(out, d, 2);
     out.push(' ');
     push_width(out, sod / 3600, 2);
+    out.push(':');
     push_width(out, (sod % 3600) / 60, 2);
+    out.push(':');
     push_width(out, sod % 60, 2);
     out.push('.');
     push_width(out, frac, 9);
+    out.append(" UTC");
 }
 
 fn record(out: u8[>..]&, ns: i64, level: levels::Level, file: u8[:], row: i64, text: u8[:]) {

@@ -137,10 +137,10 @@ fn self_check() -> bool {
 
     var stamped: u8[>..] = [];
     emit::stamp(stamped, 1700000000123456789);
-    if stamped != "20231114 221320.123456789" { return false; }
+    if stamped != "2023-11-14 22:13:20.123456789 UTC" { return false; }
     var rec: u8[>..] = [];
     emit::record(rec, 1700000000123456789, levels::Level.Info, "order.goose", 40, order);
-    if rec != "[20231114 221320.123456789] [INFO] [order.goose:40] [tag=ORDER_SENT brain=glm symbol=BTC packet_id=p1 cloid=abc]" { return false; }
+    if rec != "[2023-11-14 22:13:20.123456789 UTC] [INFO] [order.goose:40] [tag=ORDER_SENT brain=glm symbol=BTC packet_id=p1 cloid=abc]" { return false; }
 
     let err = "https://api.telegram.org/bot123456:ABCDEF/sendMessage: connection failed";
     let hook = "https://discord.com/api/webhooks/123456789/SECRET-TOKEN";
