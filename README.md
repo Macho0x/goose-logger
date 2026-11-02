@@ -6,7 +6,7 @@
 
 <p align="center">
   Process log lines for <a href="https://github.com/aardappel/goose">Goose</a><br>
-  <strong>0.3</strong> · <a href="LICENSE">Apache-2.0</a>
+  <strong>0.3.1</strong> · <a href="LICENSE">Apache-2.0</a>
 </p>
 
 One line per event:
@@ -45,6 +45,17 @@ goose tests/self_check.goose
 ```
 
 A good run prints `logger ok`.
+
+## Benchmarks
+
+`bench.goose` times this package. The row names stay fixed, so a clang run before a change and a clang run after it compare.
+
+```sh
+goose build -o logger-bench bench.goose --cc clang
+./logger-bench
+```
+
+`goose bench.goose` runs in TinyCC. That is not a timing result. Numbers depend on the machine, so this page does not publish them.
 
 ## License
 
