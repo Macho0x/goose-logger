@@ -1,9 +1,10 @@
-// Redacts secrets in a log line. The rules are the ones in the trading
-// bot's log sanitizer: line forms, then URLs, then query secrets, then
-// token shapes. A field whose name contains a mask word becomes "***",
+// Redacts secrets in a log line. A PEM private key and a BIP-39 phrase go
+// first. Then the trading bot's rules: line forms, URLs, query secrets,
+// then token shapes. A field whose name contains a mask word becomes "***",
 // except the authority and token-count names.
 
 import regex;
+import bip39;
 
 namespace sanitize;
 
@@ -41,6 +42,8 @@ let re_d4 = regex::compile("http://discord\\.com/api/webhooks/[0-9]+/[^/ \\t\\n\
 let re_d5 = regex::compile("http://discordapp\\.com/api/webhooks/[0-9]+/[^/ \\t\\n\\r?#]+");
 let re_d6 = regex::compile("http://canary\\.discord\\.com/api/webhooks/[0-9]+/[^/ \\t\\n\\r?#]+");
 let re_d7 = regex::compile("http://ptb\\.discord\\.com/api/webhooks/[0-9]+/[^/ \\t\\n\\r?#]+");
+let re_pem = regex::compile("-----BEGIN [A-Z ]*PRIVATE KEY-----[\\s\\S]*?-----END [A-Z ]*PRIVATE KEY-----");
+let re_stripe = regex::compile("(?:(?:sk|rk)_(?:live|test)_|whsec_)[A-Za-z0-9]{16,}");
 
 fn lower_byte(c: u8) -> u8 {
     if c >= 'A' && c <= 'Z' { return c + 32; }
@@ -297,8 +300,29 @@ fn urls(src: u8[:]) -> u8[>..] {
     return pass_repl(re_slack_http, e, "http://hooks.slack.com/services/***/***");
 }
 
+fn pass_stripe(src: u8[:]) -> u8[>..] {
+    var dst: u8[>..] = [];
+    var at = 0;
+    var any = false;
+    regex::each_captures(re_stripe, src) { caps =>
+        any = true;
+        let s = caps.slots[0];
+        let e = caps.slots[1];
+        copy_gap(dst, src, at, s);
+        let bad_prev = s > 0 && word(src[s - 1]);
+        let bad_next = e < src.len && word(src[e]);
+        if bad_prev || bad_next { dst.append(src[s..e]); }
+        else { dst.append("STRIPE_KEY_REDACTED"); }
+        at = e;
+    }
+    if !any { dst.append(src); }
+    else if at < src.len { dst.append(src[at..]); }
+    return dst;
+}
+
 fn shapes(src: u8[:]) -> u8[>..] {
-    let a = pass_word(src);
+    let stripe = pass_stripe(src);
+    let a = pass_word(stripe);
     let b = pass_jwt(a);
     let c = pass_repl(re_ghp, b, "GITHUB_PAT_REDACTED");
     let d = pass_repl(re_gpat, c, "GITHUB_PAT_REDACTED");
@@ -310,8 +334,59 @@ fn shapes(src: u8[:]) -> u8[>..] {
     return pass_json(i);
 }
 
+fn lower_letter(c: u8) -> bool { return c >= 'a' && c <= 'z'; }
+
+fn word_end(src: u8[:], i: i64) -> i64 {
+    var j = i;
+    while j < src.len && lower_letter(src[j]) { j += 1; }
+    let n = j - i;
+    if n < 3 || n > 8 { return -1; }
+    return j;
+}
+
+fn phrase_count(n: i64) -> bool {
+    return n == 12 || n == 15 || n == 18 || n == 21 || n == 24;
+}
+
+fn pass_seed(src: u8[:]) -> u8[>..] {
+    var dst: u8[>..] = [];
+    var i = 0;
+    var copied = 0;
+    while i < src.len {
+        if !lower_letter(src[i]) || (i > 0 && lower_letter(src[i - 1])) {
+            i += 1;
+            continue;
+        }
+        var p = i;
+        var end = i;
+        var n = 0;
+        while true {
+            let e = word_end(src, p);
+            if e < 0 || !bip39::is_word(src[p..e]) { break; }
+            n += 1;
+            end = e;
+            p = e;
+            if p < src.len && src[p] == ' ' && p + 1 < src.len && lower_letter(src[p + 1]) {
+                p += 1;
+                continue;
+            }
+            break;
+        }
+        if phrase_count(n) {
+            if copied < i { dst.append(src[copied..i]); }
+            dst.append("SEED_PHRASE_REDACTED");
+            copied = end;
+        }
+        if end == i { i += 1; } else { i = end; }
+    }
+    if copied == 0 { dst.append(src); }
+    else if copied < src.len { dst.append(src[copied..]); }
+    return dst;
+}
+
 fn text(src: u8[:]) -> u8[>..] {
-    return shapes(pass_query(urls(lines(src))));
+    let stripped = pass_seed(pass_repl(re_pem, src, "PEM_REDACTED"));
+    return shapes(pass_query(urls(lines(stripped))));
 }
 
 fn field(key: u8[:], value: u8[:]) -> u8[>..] {

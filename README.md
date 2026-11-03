@@ -6,7 +6,7 @@
 
 <p align="center">
   Process log lines for <a href="https://github.com/aardappel/goose">Goose</a><br>
-  <strong>0.3.2</strong> · <a href="LICENSE">Apache-2.0</a>
+  <strong>0.3.3</strong> · <a href="LICENSE">Apache-2.0</a>
 </p>
 
 One line per event:
@@ -15,7 +15,7 @@ One line per event:
 [2023-11-14 22:13:20.123456789 UTC] [INFO] [file.goose:12] [tag=FILL symbol=BTC]
 ```
 
-The clock is Unix time, so the stamp is UTC. The six levels are `levels::Level`: `Trace`, `Debug`, `Info`, `Warn`, `Error`, `Fatal`. The printed token is still `[INFO]`. Goose does not record the call site, so the file and the row are arguments. A value with a space, a quote, or `=` is quoted. Secrets in the text are masked the same way as the trading bot's process log.
+The clock is Unix time, so the stamp is UTC. The six levels are `levels::Level`: `Trace`, `Debug`, `Info`, `Warn`, `Error`, `Fatal`. The printed token is still `[INFO]`. Goose does not record the call site, so the file and the row are arguments. A value with a space, a quote, or `=` is quoted. Secrets in the text are masked the same way as the trading bot's process log, and so is a PEM private key, a BIP-39 phrase, and a Stripe secret key.
 
 ## Example
 

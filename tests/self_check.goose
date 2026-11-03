@@ -167,6 +167,30 @@ fn self_check() -> bool {
     if quoted != "\"a b\"" { return false; }
     let rid = emit::run_id();
     if rid.len != 40 { return false; }
+
+    let pem = "-----BEGIN PRIVATE KEY-----\nMIIEsecret\n-----END PRIVATE KEY-----";
+    if sanitize::text(pem) != "PEM_REDACTED" { return false; }
+    let rsa = "-----BEGIN RSA PRIVATE KEY-----\nabc\n-----END RSA PRIVATE KEY-----";
+    if sanitize::text(rsa) != "PEM_REDACTED" { return false; }
+    let cert = "-----BEGIN CERTIFICATE-----\nMIIE\n-----END CERTIFICATE-----";
+    if sanitize::text(cert) != cert { return false; }
+
+    let phrase = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
+    if sanitize::text(phrase) != "SEED_PHRASE_REDACTED" { return false; }
+    var around: u8[>..] = [];
+    around.append("leaked ");
+    around.append(phrase);
+    around.append(" END");
+    let around_out = sanitize::text(around);
+    if around_out != "leaked SEED_PHRASE_REDACTED END" { return false; }
+    if sanitize::text("the order filled and the book updated after the signal fired cleanly") != "the order filled and the book updated after the signal fired cleanly" { return false; }
+
+    let stripe = "sk_test_aaaaaaaaaaaaaaaa";
+    if sanitize::text(stripe) != "STRIPE_KEY_REDACTED" { return false; }
+    if sanitize::text("whsec_aaaaaaaaaaaaaaaa") != "STRIPE_KEY_REDACTED" { return false; }
+    if sanitize::text("sk_test_short") != "sk_test_short" { return false; }
+    let pub = "pk_live_abcdefghijklmnopqrstuvwx";
+    if sanitize::text(pub) != pub { return false; }
     return true;
 }
 
