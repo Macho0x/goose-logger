@@ -6,7 +6,7 @@
 
 <p align="center">
   Process log lines for <a href="https://github.com/aardappel/goose">Goose</a><br>
-  <strong>0.3.1</strong> · <a href="LICENSE">Apache-2.0</a>
+  <strong>0.3.2</strong> · <a href="LICENSE">Apache-2.0</a>
 </p>
 
 One line per event:
@@ -20,21 +20,18 @@ The clock is Unix time, so the stamp is UTC. The six levels are `levels::Level`:
 ## Example
 
 ```goose
-import os;
 import logger.emit;
 import logger.levels;
 
 fn fill(symbol: u8[:]) {
-    if !levels::enabled(levels::Level.Info, levels::Level.Info) { return; }
     var body: u8[>..] = [];
     emit::begin(body, "FILL");
     emit::field(body, "symbol", symbol);
-    var line: u8[>..] = [];
-    emit::record(line, time_ns(), levels::Level.Info, "fill.goose", 8, body);
-    write_stdout(line);
-    write_stdout("\n");
+    emit::write(levels::Level.Info, "fill.goose", 8, body);
 }
 ```
+
+`emit::write` stamps the clock and writes the line. `emit::record` fills a buffer you own when the line goes somewhere else. Call `levels::enabled` first when a floor should drop the line.
 
 `logger.goose` is the package entry. `import logger.emit` loads the line writer. `import logger.levels` loads the six names. `import logger.sanitize` loads the redaction on its own.
 

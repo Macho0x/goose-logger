@@ -111,6 +111,13 @@ fn record(out: u8[>..]&, ns: i64, level: levels::Level, file: u8[:], row: i64, t
     out.push(']');
 }
 
+fn write(level: levels::Level, file: u8[:], row: i64, text: u8[:]) {
+    var line: u8[>..] = [];
+    record(line, time_ns(), level, file, row, text);
+    write_stdout(line);
+    write_stdout("\n");
+}
+
 fn trim(s: u8[:]) -> u8[:] {
     var a = 0;
     var b = s.len;
